@@ -33,7 +33,7 @@ async function sendAlert(email){
 }
 
 async function monitor() {
-    console.log("Monitoring battery for the wing...");
+    console.log("Checking the battery every 60 seconds if it is greater than equal to 95%");
     while (true) {
         try{
              const battery = await si.battery();
