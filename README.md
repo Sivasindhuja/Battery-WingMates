@@ -46,5 +46,5 @@ In shared dorms or hostels, you might leave your laptop charging while away from
     pm2 save
     ```
 
-## 📋 Important Configuration (2026 Modern Standby)
+## Important Configuration (2026 Modern Standby)
 To ensure the script monitors your battery while the lid is closed, navigate to your **OS Power Settings** and set **"When I close the lid"** to **"Do Nothing"** while plugged in. This allows the CPU to remain active and the script to continue polling while the screen is off.
