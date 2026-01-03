@@ -7,9 +7,10 @@ const wingmates=[
     process.env.me,
     process.env.roommate
 ];
-
+//function to send email using pushbullet
 async function sendAlert(email){
     try{
+        //api call
         const response=await fetch('https://api.pushbullet.com/v2/pushes',{
             method:'POST',
             headers:{
@@ -31,23 +32,26 @@ async function sendAlert(email){
         console.error(`Failed to send ${email}`);
     }
 }
+//check battery status and call sendAlert function 
+//with delays of 1 minuite and 1 hour for regular and after sending the mail
 
 async function monitor() {
     console.log("Checking the battery every 60 seconds if it is greater than equal to 95%");
     while (true) {
+       
         try{
              const battery = await si.battery();
         console.log(`Current charge: ${battery.percent}% | Plugged in: ${battery.isCharging}`);
         if (battery.hasBattery && battery.percent >= 95 && battery.isCharging) {
-            console.log("Battery 100%! Notifying everyone...");
+            console.log("Battery above 95%! Notifying everyone...");
         for (const email of wingmates) {
             await sendAlert(email);
         }
-     
+        //hibernate for one hour after sending the alert
         await new Promise(r => setTimeout(r, 3600000));
         }
  
-        
+        //wait for a minuite and then check for the battery status again
         await new Promise(r => setTimeout(r, 60000));
 
         }
