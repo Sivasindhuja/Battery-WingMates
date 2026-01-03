@@ -36,23 +36,41 @@ async function sendAlert(email){
 //with delays of 1 minuite and 1 hour for regular and after sending the mail
 
 async function monitor() {
-    console.log("Checking the battery every 60 seconds if it is greater than equal to 95%");
+   
     while (true) {
-       
+         let delay=60000;
         try{
-             const battery = await si.battery();
-        console.log(`Current charge: ${battery.percent}% | Plugged in: ${battery.isCharging}`);
+            const battery = await si.battery();
+            console.log(`Current charge: ${battery.percent}% | Plugged in: ${battery.isCharging}`);
+            //smart polling logic
+
+            if (battery.isCharging) {
+                if (battery.percent >= 90) {
+                  
+                    delay = 10000; 
+                } else {
+                   
+                    delay = 60000;
+                }
+            } else {
+                if (battery.percent > 50) {
+                  
+                    delay = 300000; 
+                } else if (battery.percent <= 20) {
+                    
+                    delay = 60000;
+                }
+            }
         if (battery.hasBattery && battery.percent >= 95 && battery.isCharging) {
             console.log("Battery above 95%! Notifying everyone...");
         for (const email of wingmates) {
             await sendAlert(email);
         }
-        //hibernate for one hour after sending the alert
-        await new Promise(r => setTimeout(r, 3600000));
+        delay=3600000;
         }
  
         //wait for a minuite and then check for the battery status again
-        await new Promise(r => setTimeout(r, 60000));
+        await new Promise(r => setTimeout(r, delay));
 
         }
         catch(err){
