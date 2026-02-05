@@ -44,21 +44,34 @@ async function monitor() {
             console.log(`Current charge: ${battery.percent}% | Plugged in: ${battery.isCharging}`);
             //smart polling logic
 
-            if (battery.isCharging) {
-                if (battery.percent >= 90) {
-                  
-                    delay = 10000; 
-                } else {
+            // if (battery.isCharging) {
+            //     if (battery.percent >= 90) {
+            //         delay = 10000; 
+            //     } else {
                    
-                    delay = 60000;
+            //         delay = 60000;
+            //     }
+            // } else {
+            //     if (battery.percent > 50) {
+                  
+            //         delay = 300000; 
+            //     } else if (battery.percent <= 20) {
+                    
+            //         delay = 60000;
+            //     }
+            // }
+
+            if (isCharging) {
+                if (x < 95) {
+                    delay = Math.max(10, 10 * (95 - x)) * 1000; 
                 }
             } else {
-                if (battery.percent > 50) {
-                  
-                    delay = 300000; 
-                } else if (battery.percent <= 20) {
-                    
-                    delay = 60000;
+                if (x <= 20) {
+                    delay = 600000; // 10 mins (Reminder zone)
+                } else if (x > 60 && x <= 90) {
+                    delay = 2700000; // 45 mins (User's safe range)
+                } else {
+                    delay = 1800000; // 30 mins default unplugged
                 }
             }
         if (battery.hasBattery && battery.percent >= 95 && battery.isCharging) {
