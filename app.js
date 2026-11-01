@@ -26,10 +26,13 @@ async function sendAlert(email){
         });
         if(response.ok){
             console.log(`Alert sent to ${email}`);
+            return true;
         }
+        return false;
     }
     catch(err){
         console.error(`Failed to send ${email}`);
+        return false;
     }
 }
 //check battery status and call sendAlert function 
@@ -44,44 +47,32 @@ async function monitor() {
             console.log(`Current charge: ${battery.percent}% | Plugged in: ${battery.isCharging}`);
             //smart polling logic
 
-            // if (battery.isCharging) {
-            //     if (battery.percent >= 90) {
-            //         delay = 10000; 
-            //     } else {
-                   
-            //         delay = 60000;
-            //     }
-            // } else {
-            //     if (battery.percent > 50) {
-                  
-            //         delay = 300000; 
-            //     } else if (battery.percent <= 20) {
-                    
-            //         delay = 60000;
-            //     }
-            // }
-
-            if (isCharging) {
-                if (x < 95) {
-                    delay = Math.max(10, 10 * (95 - x)) * 1000; 
+            if (battery.isCharging) {
+                if (battery.percent < 95) {
+                    delay = 60000; // 1 min while charging below threshold
                 }
             } else {
-                if (x <= 20) {
+                if (battery.percent <= 20) {
                     delay = 600000; // 10 mins (Reminder zone)
-                } else if (x > 60 && x <= 90) {
+                } else if (battery.percent > 60 && battery.percent <= 90) {
                     delay = 2700000; // 45 mins (User's safe range)
                 } else {
                     delay = 1800000; // 30 mins default unplugged
                 }
             }
-        if (battery.hasBattery && battery.percent >= 95 && battery.isCharging) {
-            console.log("Battery above 95%! Notifying everyone...");
-        for (const email of wingmates) {
-            await sendAlert(email);
+            if (battery.hasBattery && battery.percent >= 95 && battery.isCharging) {
+                console.log("Battery above 95%! Notifying everyone...");
+            let alerted = false;
+            for (const email of wingmates) {
+                if (await sendAlert(email)) {
+                    alerted = true;
+                }
+            }
+            if (alerted) {
+                delay=3600000; // 1 hr cooldown after a successful alert
+            }
         }
-        delay=3600000;
-        }
- 
+  
         //wait for a minuite and then check for the battery status again
         await new Promise(r => setTimeout(r, delay));
 
@@ -90,6 +81,6 @@ async function monitor() {
             console.error(`error is ${err}`);
         }
        
-  }
+    }
 }
 monitor();

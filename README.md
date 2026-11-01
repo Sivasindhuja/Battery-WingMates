@@ -1,50 +1,73 @@
-#  Battery-WingMates
+# Battery-WingMates 
 
-**Battery-WingMates** is a lightweight Node.js background service designed for shared living environments (Colleges, PG Hostels). It monitors your laptop's battery hardware and automatically alerts your "wingmates" via Pushbullet when your device is fully charged, ensuring battery health and energy efficiency.
+**Battery-WingMates** is a lightweight Node.js background service built for shared living environments — colleges, PGs, hostels, or any dorm where a laptop gets left charging.
 
-##  The Problem
-In shared dorms or hostels, you might leave your laptop charging while away from your desk. Overcharging can degrade battery health over time. **Battery-WingMates** bridges this gap by turning your roommates into a "distributed support team" who get a notification the moment your laptop needs to be unplugged.
+It watches your laptop's battery and automatically pings your roommates via **Pushbullet** the moment your laptop hits full charge **while still plugged in** — so someone can unplug it before overcharging degrades the battery.
+
+## How It Works
+
+1. **Startup** — loads environment variables from a `.env` file (`ACCESS_TOKEN`, `me`, `roommate`).
+2. **Infinite monitor loop** — calls `si.battery()` from the [`systeminformation`](https://systeminformation.io) library to read:
+   - `percent` — current charge percentage
+   - `isCharging` — whether the laptop is plugged in
+   - `hasBattery` — whether a battery exists
+3. **Smart polling** — calculates how long to wait before the next check:
+   - **Charging & below 95%** → check again in **1 minute**
+   - **Not charging & battery ≤ 20%** → check again in **10 minutes** (low-battery reminder zone)
+   - **Not charging & battery > 60% & ≤ 90%** → check again in **45 minutes** (user's safe range)
+   - **Not charging & otherwise** → check again in **30 minutes** (default)
+4. **Alert** — if the battery is `hasBattery && percent >= 95 && isCharging`, it sends a Pushbullet notification to every "wingmate" (you + your roommate).
+5. **Cooldown** — after a successful alert, the next check is delayed by **1 hour** to avoid spam.
 
 ## Features
-*   **Hardware-Aware Monitoring:** Polling system-level battery status every 60 seconds.
-*   **Intelligent Alerting:** Only notifies when the device is `plugged in` and above `95%`.
-*   **Social Integration:** Uses Pushbullet API to send instant push notifications to multiple recipients.
-*   **Spam Protection:** Built-in 1-hour cooldown period after a successful notification.
-*   **Daemonized Execution:** Configured to run 24/7 in the background using PM2.
-*   **Secure:** Sensitive API tokens and emails are managed via environment variables (`.env`).
 
-##  Tech Stack
-*   **Runtime:** Node.js (ES Modules)
-*   **Hardware API:** [systeminformation](systeminformation.io)
-*   **Process Manager:** [PM2](pm2.keymetrics.io)
-*   **Notifications:** [Pushbullet API](docs.pushbullet.com)
+- **Hardware-aware monitoring** via system-level battery APIs.
+- **Intelligent alerting** — only notifies when plugged in *and* above 95%.
+- **Social integration** — Pushbullet pushes to multiple recipients.
+- **Spam protection** — 1-hour cooldown after a successful notification.
+- **Smart polling** — sleeps longer when the battery is healthy, shorter when action is needed.
 
-## Installation & Setup
+## Tech Stack
 
-1. **Clone the repository:**
+- **Runtime:** Node.js 18+ (ES Modules)
+- **Hardware API:** [systeminformation](https://systeminformation.io)
+- **Notifications:** [Pushbullet API](https://docs.pushbullet.com)
+- **Process Manager:** PM2 (optional, for running 24/7)
+
+## Setup
+
+1. **Clone the repo:**
    ```bash
-   git clone github.com
+   git clone https://github.com/Sivasindhuja/Battery-WingMates.git
    cd Battery-WingMates
+   ```
 
- 2.  **Install dependencies:**
-    ```bash
-    npm install
-    ```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-3.  **Configure Environment Variables:**
-    Create a `.env` file in the root directory:
-    ```env
-    ACCESS_TOKEN=your_pushbullet_token
-    me=your_email@gmail.com
-    roommate=roommate_email@gmail.com
-    ```
+3. **Configure environment variables** — create a `.env` file in the root:
+   ```env
+   ACCESS_TOKEN=your_pushbullet_token
+   me=your_email@gmail.com
+   roommate=roommate_email@gmail.com
+   ```
 
-4.  **Run the Service:**
-    To keep the script running in the background:
-    ```bash
-    pm2 start app.js --name "battery-wingmates"
-    pm2 save
-    ```
+4. **Run the service:**
+   ```bash
+   npm start
+   ```
+   Or with PM2 (recommended for background/daemon use):
+   ```bash
+   pm2 start app.js --name "battery-wingmates"
+   pm2 save
+   ```
 
 ## Important Configuration (2026 Modern Standby)
-To ensure the script monitors your battery while the lid is closed, navigate to your **OS Power Settings** and set **"When I close the lid"** to **"Do Nothing"** while plugged in. This allows the CPU to remain active and the script to continue polling while the screen is off.
+
+To ensure the script monitors your battery while the lid is closed, set your OS power setting **"When I close the lid"** to **"Do Nothing"** while plugged in — this keeps the CPU awake so the polling loop keeps running with the screen off.
+
+## License
+
+ISC
